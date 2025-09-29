@@ -128,7 +128,7 @@ class Transformer(Module):
 
     def forward(self, x):
 
-        for attn, ff in self.layers:
+        for attn, ff in self.layers: # type: ignore
             x = attn(x) + x
             x = ff(x) + x
 
@@ -149,7 +149,7 @@ class NaViT(Module):
         dim_head = 64,
         dropout = 0.,
         emb_dropout = 0.,
-        token_dropout_prob: float | None = None
+        token_dropout_prob = 0.1
     ):
         super().__init__()
         image_height, image_width = pair(image_size)
@@ -219,7 +219,7 @@ class NaViT(Module):
 
         for patches in all_patches:
             patch_height, patch_width = patches.shape[:2]
-            hw_indices = torch.stack(torch.meshgrid((arange(patch_height), arange(patch_width)), indexing = 'ij'), dim = -1)
+            hw_indices = torch.stack(torch.meshgrid((arange(patch_height), arange(patch_width)), indexing = 'ij'), dim = -1) # type: ignore
             hw_indices = rearrange(hw_indices, 'h w c -> (h w) c')
             positions.append(hw_indices)
 
@@ -231,7 +231,7 @@ class NaViT(Module):
 
         seq_lens = torch.tensor([i.shape[0] for i in tokens], device = device)
 
-        if self.training and self.token_dropout_prob > 0:
+        if self.training and self.token_dropout_prob > 0: 
 
             keep_seq_lens = ((1. - self.token_dropout_prob) * seq_lens).int().clamp(min = 1)
 
@@ -239,7 +239,7 @@ class NaViT(Module):
             kept_positions = []
 
             for one_image_tokens, one_image_positions, seq_len, num_keep in zip(tokens, positions, seq_lens, keep_seq_lens):
-                keep_indices = torch.randn((seq_len,), device = device).topk(num_keep, dim = -1).indices
+                keep_indices = torch.randn((seq_len,), device = device).topk(num_keep, dim = -1).indices # type: ignore
 
                 one_image_kept_tokens = one_image_tokens[keep_indices]
                 one_image_kept_positions = one_image_positions[keep_indices]
